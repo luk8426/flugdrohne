@@ -16,13 +16,15 @@ class Application(tk.Frame):
         self.speed = {"x": [0], "y": [0], "z": [0]}
         self.acc = {"x": [0], "y": [0], "z": [0]}
         self.acc_ang = {"x": [0], "y": [0], "z": [0]}
+        self.positions = {"x": [0], "y": [0], "z": [0]}
         self.cur_velo_label, self.cur_acc_label, self.cur_acc_ang_label, self.cur_acc_ang_max_label = tk.Label(), tk.Label(), tk.Label(), tk.Label()
+        self.pwm_labels = [tk.Label() for i in range(5)]
+        self.pwm_values = [0 for i in range(5)]
         self.cur_acc_ang = ''
         self.cur_acc = ''
         self.cur_velo = ''
         self.cur_acc_ang = None
         self.cur_acc_ang_max = None
-        self.positions = {"x": [0], "y": [0], "z": [0]}
         self.createWidgets()
         self.updateThread = td.Thread(target=self.readMavLinkAndUpdateGui)
         self.updateThread.start()
@@ -33,22 +35,36 @@ class Application(tk.Frame):
             
             # Mock for new Input, we have to create a socket to the MAV-UDP here
             sleep(3)
+
+            # Update the Positions
+
             self.positions["x"].append(random.randint(3, 20))
             self.positions["y"].append(random.randint(3, 20))
             self.positions["z"].append(random.randint(3, 20))
+            x = np.asarray(self.positions["x"])
+            y = np.asarray(self.positions["y"])
+            z = np.asarray(self.positions["z"])
 
+            # Update the speed/acc values
             self.acc_ang["x"].append(random.randint(3, 20))
             self.acc_ang["y"].append(random.randint(3, 20))
             self.acc_ang["z"].append(random.randint(3, 20))
             
-            # Add the new Positions to the Plot
-            x = np.asarray(self.positions["x"])
-            y = np.asarray(self.positions["y"])
-            z = np.asarray(self.positions["z"])
-            
+            # Update the PWM values
+            self.pwm_values = [random.randint(900, 2200) for i in range(5)]
+
             # Debugging
             #print(self.positions)
-            
+
+            # Update the text of the Speed/Acc Labels
+            self.cur_velo = "\tVelocity: \nx:\t"+ str(self.speed['x'][-1]) + '\ny:\t'+str(self.speed['y'][-1])+'\nz:\t'+str(self.speed['z'][-1])
+            self.cur_acc = "\tAcceleration: \nx:\t"+ str(self.acc['x'][-1]) + '\ny:\t'+str(self.acc['y'][-1])+'\nz:\t'+str(self.acc['z'][-1])
+            self.cur_acc_ang = "\tAngular Acceleration: \nx:\t"+ str(self.acc_ang['x'][-1]) + '\ny:\t'+str(self.acc_ang['y'][-1])+'\nz:\t'+str(self.acc_ang['z'][-1])
+            self.cur_acc_ang_max = "\tMax Angular Acceleration: \nx:\t"+  str(max(self.acc_ang['x'])) + '\ny:\t'+str(max(self.acc_ang['y']))+'\nz:\t' + str(max(self.acc_ang['z']))
+
+            # Update the text for PWM Output Labels
+            # n.a
+
             # Update content of the plots
 
             self.ax2D.clear()
@@ -58,12 +74,12 @@ class Application(tk.Frame):
             self.ax2D.set_xlabel('Y')
             self.ax3D.plot(x, y, z)
 
-            # Edit the text of the Labels
-            self.cur_velo = "\tVelocity: \nx:\t"+ str(self.speed['x'][-1]) + '\ny:\t'+str(self.speed['y'][-1])+'\nz:\t'+str(self.speed['z'][-1])
-            self.cur_acc = "\tAcceleration: \nx:\t"+ str(self.acc['x'][-1]) + '\ny:\t'+str(self.acc['y'][-1])+'\nz:\t'+str(self.acc['z'][-1])
-            self.cur_acc_ang = "\tAngular Acceleration: \nx:\t"+ str(self.acc_ang['x'][-1]) + '\ny:\t'+str(self.acc_ang['y'][-1])+'\nz:\t'+str(self.acc_ang['z'][-1])
-            self.cur_acc_ang_max = "\tMax Angular Acceleration: \nx:\t"+  str(max(self.acc_ang['x'])) + '\ny:\t'+str(max(self.acc_ang['y']))+'\nz:\t' + str(max(self.acc_ang['z']))
+            # Update the labels
 
+            for i in range(5):
+                self.pwm_label_frame.remove(self.pwm_labels[i])
+                self.pwm_labels[i] = tk.Label(text='Actuator ' + str(i)+ ' Output:' + str(self.pwm_values[i]) + ' us')
+                self.pwm_label_frame.add(self.pwm_labels[i])
             self.label_frame.remove(self.cur_velo_label)
             self.cur_velo_label = tk.Label(text=self.cur_velo)
             self.label_frame.add(self.cur_velo_label)
@@ -75,7 +91,7 @@ class Application(tk.Frame):
             self.label_frame.add(self.cur_acc_ang_label)
             self.label_frame.remove(self.cur_acc_ang_max_label)
             self.cur_acc_ang_max_label = tk.Label(text=self.cur_acc_ang_max)
-            self.label_frame.add(self.cur_acc_ang_max)
+            self.label_frame.add(self.cur_acc_ang_max_label)
 
 
             self.canvas.draw()
@@ -118,10 +134,12 @@ class Application(tk.Frame):
         # .....
         self.label_frame = tk.PanedWindow(orient="vertical")
         self.label_frame.grid(row=0, column=1) 
+        self.pwm_label_frame = tk.PanedWindow(orient="vertical")
+        self.pwm_label_frame.grid(row=0, column=2)
         self.canvas.draw()
 
 
 root=tk.Tk()
-root.geometry("800x900")
+root.geometry("1000x900")
 app=Application(master=root)
 app.mainloop()
