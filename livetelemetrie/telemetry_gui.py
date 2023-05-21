@@ -57,10 +57,10 @@ class Application(tk.Frame):
             #print(self.positions)
 
             # Update the text of the Speed/Acc Labels
-            self.cur_velo = "\tVelocity: \nx:\t"+ str(self.speed['x'][-1]) + '\ny:\t'+str(self.speed['y'][-1])+'\nz:\t'+str(self.speed['z'][-1])
-            self.cur_acc = "\tAcceleration: \nx:\t"+ str(self.acc['x'][-1]) + '\ny:\t'+str(self.acc['y'][-1])+'\nz:\t'+str(self.acc['z'][-1])
-            self.cur_acc_ang = "\tAngular Acceleration: \nx:\t"+ str(self.acc_ang['x'][-1]) + '\ny:\t'+str(self.acc_ang['y'][-1])+'\nz:\t'+str(self.acc_ang['z'][-1])
-            self.cur_acc_ang_max = "\tMax Angular Acceleration: \nx:\t"+  str(max(self.acc_ang['x'])) + '\ny:\t'+str(max(self.acc_ang['y']))+'\nz:\t' + str(max(self.acc_ang['z']))
+            self.cur_velo = "Velocity: \nx:\t"+ str(self.speed['x'][-1]) + '\ny:\t'+str(self.speed['y'][-1])+'\nz:\t'+str(self.speed['z'][-1])
+            self.cur_acc = "Acceleration: \nx:\t"+ str(self.acc['x'][-1]) + '\ny:\t'+str(self.acc['y'][-1])+'\nz:\t'+str(self.acc['z'][-1])
+            self.cur_acc_ang = "Angular Acceleration: \nx:\t"+ str(self.acc_ang['x'][-1]) + '\ny:\t'+str(self.acc_ang['y'][-1])+'\nz:\t'+str(self.acc_ang['z'][-1])
+            self.cur_acc_ang_max = "Max Angular Acceleration: \nx:\t"+  str(max(self.acc_ang['x'])) + '\ny:\t'+str(max(self.acc_ang['y']))+'\nz:\t' + str(max(self.acc_ang['z']))
 
             # Update the text for PWM Output Labels
             # n.a
@@ -78,19 +78,19 @@ class Application(tk.Frame):
 
             for i in range(5):
                 self.pwm_label_frame.remove(self.pwm_labels[i])
-                self.pwm_labels[i] = tk.Label(text='Actuator ' + str(i)+ ' Output:' + str(self.pwm_values[i]) + ' us')
+                self.pwm_labels[i] = tk.Label(anchor='w', background='#b50d0d', foreground='white', text='Actuator ' + str(i+1)+ ' Output:\t' + str(self.pwm_values[i]) + ' us')
                 self.pwm_label_frame.add(self.pwm_labels[i])
             self.label_frame.remove(self.cur_velo_label)
-            self.cur_velo_label = tk.Label(text=self.cur_velo)
+            self.cur_velo_label = tk.Label(text=self.cur_velo, anchor='w', background='#b50d0d', foreground='white')
             self.label_frame.add(self.cur_velo_label)
             self.label_frame.remove(self.cur_acc_label)
-            self.cur_acc_label = tk.Label(text=self.cur_acc)
+            self.cur_acc_label = tk.Label(text=self.cur_acc, anchor='w', background='#b50d0d', foreground='white')
             self.label_frame.add(self.cur_acc_label)
             self.label_frame.remove(self.cur_acc_ang_label)
-            self.cur_acc_ang_label = tk.Label(text=self.cur_acc_ang)
+            self.cur_acc_ang_label = tk.Label(text=self.cur_acc_ang, anchor='w', background='#b50d0d', foreground='white')
             self.label_frame.add(self.cur_acc_ang_label)
             self.label_frame.remove(self.cur_acc_ang_max_label)
-            self.cur_acc_ang_max_label = tk.Label(text=self.cur_acc_ang_max)
+            self.cur_acc_ang_max_label = tk.Label(text=self.cur_acc_ang_max, anchor='w', background='#b50d0d', foreground='white')
             self.label_frame.add(self.cur_acc_ang_max_label)
 
 
@@ -133,13 +133,16 @@ class Application(tk.Frame):
 
         # .....
         self.label_frame = tk.PanedWindow(orient="vertical")
+        self.label_frame.configure(background='white')
         self.label_frame.grid(row=0, column=1) 
         self.pwm_label_frame = tk.PanedWindow(orient="vertical")
+        self.pwm_label_frame.configure(background='white')
         self.pwm_label_frame.grid(row=0, column=2)
         self.canvas.draw()
 
 
 root=tk.Tk()
 root.geometry("1000x900")
+root.configure(background='white')
 app=Application(master=root)
 app.mainloop()
