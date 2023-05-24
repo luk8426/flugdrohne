@@ -6,6 +6,9 @@ import threading as td
 from time import sleep
 import random
 
+import asyncio
+from mavsdk import System
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -16,7 +19,7 @@ class Application(tk.Frame):
         self.speed = {"x": [0], "y": [0], "z": [0]}
         self.acc = {"x": [0], "y": [0], "z": [0]}
         self.acc_ang = {"x": [0], "y": [0], "z": [0]}
-        self.positions = {"x": [0], "y": [0], "z": [0]}
+        #self.positions = {"x": [0], "y": [0], "z": [0]}
         self.cur_velo_label, self.cur_acc_label, self.cur_acc_ang_label, self.cur_acc_ang_max_label = tk.Label(), tk.Label(), tk.Label(), tk.Label()
         self.pwm_labels = [tk.Label() for i in range(5)]
         self.pwm_values = [0 for i in range(5)]
@@ -27,31 +30,33 @@ class Application(tk.Frame):
         self.cur_acc_ang_max = None
         self.createWidgets()
         self.updateThread = td.Thread(target=self.readMavLinkAndUpdateGui)
-        self.updateThread.start()
+        self.updateThread.start()     
+
+
 
 
     def readMavLinkAndUpdateGui(self):
         while(True):
             
             # Mock for new Input, we have to create a socket to the MAV-UDP here
-            sleep(3)
+            sleep(1)
 
             # Update the Positions
 
-            self.positions["x"].append(random.randint(3, 20))
-            self.positions["y"].append(random.randint(3, 20))
-            self.positions["z"].append(random.randint(3, 20))
-            x = np.asarray(self.positions["x"])
-            y = np.asarray(self.positions["y"])
-            z = np.asarray(self.positions["z"])
+            #self.positions["x"].append(random.randint(3, 20))
+            #self.positions["y"].append(random.randint(3, 20))
+            #self.positions["z"].append(random.randint(3, 20))
+            x = np.asarray(positions["x"])
+            y = np.asarray(positions["y"])
+            z = np.asarray(positions["z"])
 
             # Update the speed/acc values
-            self.acc_ang["x"].append(random.randint(3, 20))
-            self.acc_ang["y"].append(random.randint(3, 20))
-            self.acc_ang["z"].append(random.randint(3, 20))
+            #self.acc_ang["x"].append(random.randint(3, 20))
+            #self.acc_ang["y"].append(random.randint(3, 20))
+            #self.acc_ang["z"].append(random.randint(3, 20))
             
             # Update the PWM values
-            self.pwm_values = [random.randint(900, 2200) for i in range(5)]
+            #self.pwm_values = [random.randint(900, 2200) for i in range(5)]
 
             # Debugging
             #print(self.positions)
@@ -92,8 +97,6 @@ class Application(tk.Frame):
             self.label_frame.remove(self.cur_acc_ang_max_label)
             self.cur_acc_ang_max_label = tk.Label(text=self.cur_acc_ang_max, anchor='w', background='#b50d0d', foreground='white')
             self.label_frame.add(self.cur_acc_ang_max_label)
-
-
             self.canvas.draw()
 
 
@@ -108,9 +111,9 @@ class Application(tk.Frame):
         # First subplot
         self.ax2D = fig.add_subplot(2, 1, 1)
 
-        x = np.asarray(self.positions["x"])
-        y = np.asarray(self.positions["y"])
-        z = np.asarray(self.positions["z"])
+        x = np.asarray(positions["x"])
+        y = np.asarray(positions["y"])
+        z = np.asarray(positions["z"])
 
         self.ax2D.plot(x, y)
         #self.ax2D.grid(True)
@@ -140,7 +143,29 @@ class Application(tk.Frame):
         self.pwm_label_frame.grid(row=0, column=2)
         self.canvas.draw()
 
+async def run():
+# Init the drone
+    drone = System()
+    await drone.connect(system_address="udp://:14540")
+    asyncio.ensure_future(updatePosition(drone))
+    #asyncio.ensure_future(print_in_air(drone))#, app))
+    while True:
+        await asyncio.sleep(1)
 
+async def updatePosition(drone):
+    async for position in drone.telemetry.position():
+        positions["z"].append(position.relative_altitude_m)
+        positions["x"].append(abs(position.longitude_deg))
+        positions["y"].append(abs(position.latitude_deg)) 
+
+async def print_in_air(drone):
+    async for in_air in drone.telemetry.in_air():
+        print(f"In air: {in_air}")
+
+#positions = {"x": [8550], "y": [47400], "z": [0]}
+positions = {"x": [], "y": [], "z": []}
+mavlinkThread = td.Thread(target=asyncio.run, args=[run()])
+mavlinkThread.start()
 root=tk.Tk()
 root.geometry("1000x900")
 root.configure(background='white')
