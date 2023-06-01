@@ -6,6 +6,7 @@ import threading as td
 from time import sleep
 import random
 
+import math
 import asyncio
 from mavsdk import System
 
@@ -16,10 +17,6 @@ class Application(tk.Frame):
         self.canvas = None
         self.ax3D = None
         self.ax2D = None
-        self.speed = {"x": [0], "y": [0], "z": [0]}
-        self.acc = {"x": [0], "y": [0], "z": [0]}
-        self.acc_ang = {"x": [0], "y": [0], "z": [0]}
-        #self.positions = {"x": [0], "y": [0], "z": [0]}
         self.cur_velo_label, self.cur_acc_label, self.cur_acc_ang_label, self.cur_acc_ang_max_label = tk.Label(), tk.Label(), tk.Label(), tk.Label()
         self.pwm_labels = [tk.Label() for i in range(5)]
         self.pwm_values = [0 for i in range(5)]
@@ -39,45 +36,30 @@ class Application(tk.Frame):
         while(True):
             
             # Mock for new Input, we have to create a socket to the MAV-UDP here
-            sleep(1)
-
-            # Update the Positions
-
-            #self.positions["x"].append(random.randint(3, 20))
-            #self.positions["y"].append(random.randint(3, 20))
-            #self.positions["z"].append(random.randint(3, 20))
+            sleep(0.001)
             x = np.asarray(positions["x"])
             y = np.asarray(positions["y"])
             z = np.asarray(positions["z"])
 
-            # Update the speed/acc values
-            #self.acc_ang["x"].append(random.randint(3, 20))
-            #self.acc_ang["y"].append(random.randint(3, 20))
-            #self.acc_ang["z"].append(random.randint(3, 20))
-            
-            # Update the PWM values
-            #self.pwm_values = [random.randint(900, 2200) for i in range(5)]
-
-            # Debugging
-            #print(self.positions)
-
             # Update the text of the Speed/Acc Labels
-            self.cur_velo = "Velocity: \nx:\t"+ str(self.speed['x'][-1]) + '\ny:\t'+str(self.speed['y'][-1])+'\nz:\t'+str(self.speed['z'][-1])
-            self.cur_acc = "Acceleration: \nx:\t"+ str(self.acc['x'][-1]) + '\ny:\t'+str(self.acc['y'][-1])+'\nz:\t'+str(self.acc['z'][-1])
-            self.cur_acc_ang = "Angular Acceleration: \nx:\t"+ str(self.acc_ang['x'][-1]) + '\ny:\t'+str(self.acc_ang['y'][-1])+'\nz:\t'+str(self.acc_ang['z'][-1])
-            self.cur_acc_ang_max = "Max Angular Acceleration: \nx:\t"+  str(max(self.acc_ang['x'])) + '\ny:\t'+str(max(self.acc_ang['y']))+'\nz:\t' + str(max(self.acc_ang['z']))
+            self.cur_velo = "Velocity: \nHorizontal:\t%.2f\nVertical:\t\t%.2f" % (speed['horizontal'][-1], speed['vertical'][-1])
+            self.cur_acc = "Acceleration: \n\Total:\t\t%.2f\nVertical:\t\t%.2f" % (acc['total'][-1], acc['vertical'][-1])
+            self.cur_acc_ang = "Angular Acceleration: \nx:\t\t%.5f\ny:\t\t%.5f\nz:\t\t%.5f" % (acc_ang['x'][-1], acc_ang['y'][-1], acc_ang['z'][-1])
+            self.cur_acc_ang_max = "Max Angular Acceleration: \nx:\t\t%.2f\ny:\t\t%.2f\nz:\t\t%.2f" % (max(abs(acc_ang['x'])), max(abs(acc_ang['y'])), max(abs(acc_ang['z'])))
 
             # Update the text for PWM Output Labels
             # n.a
 
             # Update content of the plots
-
-            self.ax2D.clear()
-            self.ax3D.clear()
-            self.ax2D.plot(x, y)
-            self.ax2D.set_ylabel('X')
-            self.ax2D.set_xlabel('Y')
-            self.ax3D.plot(x, y, z)
+            try:
+                self.ax2D.clear()
+                self.ax3D.clear()
+                self.ax2D.plot(x, y)
+                self.ax2D.set_ylabel('X')
+                self.ax2D.set_xlabel('Y')
+                self.ax3D.plot(x, y, z)
+            except:
+                pass
 
             # Update the labels
 
@@ -86,16 +68,16 @@ class Application(tk.Frame):
                 self.pwm_labels[i] = tk.Label(anchor='w', background='#b50d0d', foreground='white', text='Actuator ' + str(i+1)+ ' Output:\t' + str(self.pwm_values[i]) + ' us')
                 self.pwm_label_frame.add(self.pwm_labels[i])
             self.label_frame.remove(self.cur_velo_label)
-            self.cur_velo_label = tk.Label(text=self.cur_velo, anchor='w', background='#b50d0d', foreground='white')
+            self.cur_velo_label = tk.Label(text=self.cur_velo, anchor='w', background='#b50d0d', foreground='white', justify=tk.LEFT)
             self.label_frame.add(self.cur_velo_label)
             self.label_frame.remove(self.cur_acc_label)
-            self.cur_acc_label = tk.Label(text=self.cur_acc, anchor='w', background='#b50d0d', foreground='white')
+            self.cur_acc_label = tk.Label(text=self.cur_acc, anchor='w', background='#b50d0d', foreground='white', justify=tk.LEFT)
             self.label_frame.add(self.cur_acc_label)
             self.label_frame.remove(self.cur_acc_ang_label)
-            self.cur_acc_ang_label = tk.Label(text=self.cur_acc_ang, anchor='w', background='#b50d0d', foreground='white')
+            self.cur_acc_ang_label = tk.Label(text=self.cur_acc_ang, anchor='w', background='#b50d0d', foreground='white', justify=tk.LEFT)
             self.label_frame.add(self.cur_acc_ang_label)
             self.label_frame.remove(self.cur_acc_ang_max_label)
-            self.cur_acc_ang_max_label = tk.Label(text=self.cur_acc_ang_max, anchor='w', background='#b50d0d', foreground='white')
+            self.cur_acc_ang_max_label = tk.Label(text=self.cur_acc_ang_max, anchor='w', background='#b50d0d', foreground='white', justify=tk.LEFT)
             self.label_frame.add(self.cur_acc_ang_max_label)
             self.canvas.draw()
 
@@ -133,41 +115,76 @@ class Application(tk.Frame):
         data_fig.suptitle('Current Data for Red Sparrow')
 
         # Plots
-
-        # .....
         self.label_frame = tk.PanedWindow(orient="vertical")
-        self.label_frame.configure(background='white')
+        self.label_frame.configure(background='#b50d0d')
         self.label_frame.grid(row=0, column=1) 
         self.pwm_label_frame = tk.PanedWindow(orient="vertical")
-        self.pwm_label_frame.configure(background='white')
+        self.pwm_label_frame.configure(background='#b50d0d')
         self.pwm_label_frame.grid(row=0, column=2)
         self.canvas.draw()
 
 async def run():
-# Init the drone
     drone = System()
     await drone.connect(system_address="udp://:14540")
-    asyncio.ensure_future(updatePosition(drone))
-    #asyncio.ensure_future(print_in_air(drone))#, app))
+    asyncio.ensure_future(updateAccSpeedAng(drone))
+    asyncio.ensure_future(updateVeloPosition(drone))
     while True:
         await asyncio.sleep(1)
 
-async def updatePosition(drone):
+async def updateGlobalPosition(drone):
     async for position in drone.telemetry.position():
         positions["z"].append(position.relative_altitude_m)
         positions["x"].append(abs(position.longitude_deg))
         positions["y"].append(abs(position.latitude_deg)) 
 
+async def updateVeloPosition(drone):
+    async for posvelo in drone.telemetry.position_velocity_ned ():
+        speed["vertical"].append(posvelo.velocity.down_m_s)
+        speed["horizontal"].append(math.sqrt(posvelo.velocity.north_m_s**2 + posvelo.velocity.east_m_s**2))
+        positions["z"].append(posvelo.position.down_m)
+        positions["x"].append(posvelo.position.north_m)
+        positions["y"].append(posvelo.position.east_m)
+
+
+async def updateAccSpeedAng(drone):
+    async for imu in drone.telemetry.imu():
+        new_acc = imu.acceleration_frd 
+        acc["vertical"].append(new_acc.down_m_s2)
+        acc["total"].append(math.sqrt(new_acc.forward_m_s2 **2 + new_acc.right_m_s2 **2 + new_acc.down_m_s2**2))
+        new_ang_speed = imu.angular_velocity_frd
+        speed_ang["x"].append(new_ang_speed.forward_rad_s)
+        speed_ang["y"].append(new_ang_speed.right_rad_s)
+        speed_ang["z"].append(new_ang_speed.down_rad_s)
+        d_t = (imu.timestamp_us-imu_timestamps[-1])/1000000 # in s
+        imu_timestamps.append(imu.timestamp_us)
+        #if (len(imu_timestamps)!=1):
+        acc_ang["x"].append((speed_ang["x"][-1]-speed_ang["x"][-2])/d_t)
+        acc_ang["y"].append((speed_ang["y"][-1]-speed_ang["y"][-2])/d_t)
+        acc_ang["z"].append((speed_ang["z"][-1]-speed_ang["z"][-2])/d_t)            
+
+
+
+
+
+async def updateSpeedAng(drone):
+    async for speed_ang in drone.telemetry.velocity_ned():
+        acc["vertical"].append(acc.down_m_s2)
+        acc["total"].append(math.sqrt(acc.forward_m_s2 **2 + acc.right_m_s2 **2 + acc.down_m_s2))
+
 async def print_in_air(drone):
     async for in_air in drone.telemetry.in_air():
         print(f"In air: {in_air}")
 
-#positions = {"x": [8550], "y": [47400], "z": [0]}
-positions = {"x": [], "y": [], "z": []}
+speed = {"vertical": [0], "horizontal": [0]}
+acc = {"vertical": [0], "total": [0]}
+speed_ang = {"x": [0], "y": [0], "z": [0]}
+acc_ang = {"x": [0], "y": [0], "z": [0]}
+imu_timestamps = [0]
+positions = {"x": [], "y": [], "z": []} # NorthEastDown
 mavlinkThread = td.Thread(target=asyncio.run, args=[run()])
 mavlinkThread.start()
 root=tk.Tk()
 root.geometry("1000x900")
-root.configure(background='white')
+root.configure(background='#b50d0d')
 app=Application(master=root)
 app.mainloop()
