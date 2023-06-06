@@ -43,8 +43,8 @@ async def print_position(drone):
 
 
 async def print_pwm_out(drone):
-    async for actuator_control_target in drone.telemetry.actuator_control_target():
-        print(actuator_control_target)
+    async for actuator_output_status in drone.telemetry.actuator_output_status():
+        print(actuator_output_status.actuator)
 
 
 if __name__ == "__main__":

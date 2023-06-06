@@ -19,7 +19,6 @@ class Application(tk.Frame):
         self.ax2D = None
         self.cur_velo_label, self.cur_acc_label, self.cur_acc_ang_label, self.cur_acc_ang_max_label = tk.Label(), tk.Label(), tk.Label(), tk.Label()
         self.pwm_labels = [tk.Label() for i in range(5)]
-        self.pwm_values = [0 for i in range(5)]
         self.cur_acc_ang = ''
         self.cur_acc = ''
         self.cur_velo = ''
@@ -45,7 +44,7 @@ class Application(tk.Frame):
             self.cur_velo = "Velocity: \nHorizontal:\t%.2f\nVertical:\t\t%.2f" % (speed['horizontal'][-1], speed['vertical'][-1])
             self.cur_acc = "Acceleration: \n\Total:\t\t%.2f\nVertical:\t\t%.2f" % (acc['total'][-1], acc['vertical'][-1])
             self.cur_acc_ang = "Angular Acceleration: \nx:\t\t%.5f\ny:\t\t%.5f\nz:\t\t%.5f" % (acc_ang['x'][-1], acc_ang['y'][-1], acc_ang['z'][-1])
-            self.cur_acc_ang_max = "Max Angular Acceleration: \nx:\t\t%.2f\ny:\t\t%.2f\nz:\t\t%.2f" % (max(abs(acc_ang['x'])), max(abs(acc_ang['y'])), max(abs(acc_ang['z'])))
+            self.cur_acc_ang_max = "Max Angular Acceleration: \nx:\t\t%.2f\ny:\t\t%.2f\nz:\t\t%.2f" % (max([abs(x) for x in acc_ang['x']]), max([abs(y) for y in acc_ang['y']]), max([abs(z) for z in acc_ang['z']]))
 
             # Update the text for PWM Output Labels
             # n.a
@@ -65,7 +64,7 @@ class Application(tk.Frame):
 
             for i in range(5):
                 self.pwm_label_frame.remove(self.pwm_labels[i])
-                self.pwm_labels[i] = tk.Label(anchor='w', background='#b50d0d', foreground='white', text='Actuator ' + str(i+1)+ ' Output:\t' + str(self.pwm_values[i]) + ' us')
+                self.pwm_labels[i] = tk.Label(anchor='w', background='#b50d0d', foreground='white', text='Actuator ' + str(i+1)+ ' Output:\t' + str(pwm_values[i]) + ' us')
                 self.pwm_label_frame.add(self.pwm_labels[i])
             self.label_frame.remove(self.cur_velo_label)
             self.cur_velo_label = tk.Label(text=self.cur_velo, anchor='w', background='#b50d0d', foreground='white', justify=tk.LEFT)
@@ -128,6 +127,7 @@ async def run():
     await drone.connect(system_address="udp://:14540")
     asyncio.ensure_future(updateAccSpeedAng(drone))
     asyncio.ensure_future(updateVeloPosition(drone))
+    asyncio.ensure_future(updatePWM(drone))
     while True:
         await asyncio.sleep(1)
 
@@ -145,7 +145,6 @@ async def updateVeloPosition(drone):
         positions["x"].append(posvelo.position.north_m)
         positions["y"].append(posvelo.position.east_m)
 
-
 async def updateAccSpeedAng(drone):
     async for imu in drone.telemetry.imu():
         new_acc = imu.acceleration_frd 
@@ -162,9 +161,9 @@ async def updateAccSpeedAng(drone):
         acc_ang["y"].append((speed_ang["y"][-1]-speed_ang["y"][-2])/d_t)
         acc_ang["z"].append((speed_ang["z"][-1]-speed_ang["z"][-2])/d_t)            
 
-
-
-
+async def updatePWM(drone):
+    async for actuator_output_status in drone.telemetry.actuator_output_status():
+        pwm_values = actuator_output_status.actuator[0:4]
 
 async def updateSpeedAng(drone):
     async for speed_ang in drone.telemetry.velocity_ned():
@@ -175,6 +174,7 @@ async def print_in_air(drone):
     async for in_air in drone.telemetry.in_air():
         print(f"In air: {in_air}")
 
+pwm_values = [0 for i in range(5)]
 speed = {"vertical": [0], "horizontal": [0]}
 acc = {"vertical": [0], "total": [0]}
 speed_ang = {"x": [0], "y": [0], "z": [0]}
