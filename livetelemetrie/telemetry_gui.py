@@ -19,9 +19,11 @@ class Application(tk.Frame):
         self.ax2D = None
         self.cur_velo_label, self.cur_acc_label, self.cur_acc_ang_label, self.cur_acc_ang_max_label = tk.Label(), tk.Label(), tk.Label(), tk.Label()
         self.pwm_labels = [tk.Label() for i in range(5)]
+        self.battery_label = tk.Label()
         self.cur_acc_ang = ''
         self.cur_acc = ''
         self.cur_velo = ''
+        self.battery_text = ""
         self.cur_acc_ang = None
         self.cur_acc_ang_max = None
         self.createWidgets()
@@ -42,9 +44,10 @@ class Application(tk.Frame):
 
             # Update the text of the Speed/Acc Labels
             self.cur_velo = "Velocity: \nHorizontal:\t%.2f\nVertical:\t\t%.2f" % (speed['horizontal'][-1], speed['vertical'][-1])
-            self.cur_acc = "Acceleration: \n\Total:\t\t%.2f\nVertical:\t\t%.2f" % (acc['total'][-1], acc['vertical'][-1])
+            self.cur_acc = "Acceleration: \nTotal:\t\t%.2f\nVertical:\t\t%.2f" % (acc['total'][-1], acc['vertical'][-1])
             self.cur_acc_ang = "Angular Acceleration: \nx:\t\t%.5f\ny:\t\t%.5f\nz:\t\t%.5f" % (acc_ang['x'][-1], acc_ang['y'][-1], acc_ang['z'][-1])
             self.cur_acc_ang_max = "Max Angular Acceleration: \nx:\t\t%.2f\ny:\t\t%.2f\nz:\t\t%.2f" % (max([abs(x) for x in acc_ang['x']]), max([abs(y) for y in acc_ang['y']]), max([abs(z) for z in acc_ang['z']]))
+            self.battery_text = ("Battery Status: \t %.1f " % (battery_value*100)) + "%"
 
             # Update the text for PWM Output Labels
             # n.a
@@ -54,8 +57,8 @@ class Application(tk.Frame):
                 self.ax2D.clear()
                 self.ax3D.clear()
                 self.ax2D.plot(x, y)
-                self.ax2D.set_ylabel('X')
-                self.ax2D.set_xlabel('Y')
+                self.ax2D.set_ylabel('N')
+                self.ax2D.set_xlabel('E')
                 self.ax3D.plot(x, y, z)
             except:
                 pass
@@ -78,6 +81,11 @@ class Application(tk.Frame):
             self.label_frame.remove(self.cur_acc_ang_max_label)
             self.cur_acc_ang_max_label = tk.Label(text=self.cur_acc_ang_max, anchor='w', background='#b50d0d', foreground='white', justify=tk.LEFT)
             self.label_frame.add(self.cur_acc_ang_max_label)
+            
+            self.label_frame.remove(self.battery_label)
+            self.battery_label = tk.Label(text=self.battery_text, anchor='w', background='#b50d0d', foreground='white', justify=tk.LEFT)
+            self.label_frame.add(self.battery_label)
+
             self.canvas.draw()
 
 
@@ -128,6 +136,7 @@ async def run():
     asyncio.ensure_future(updateAccSpeedAng(drone))
     asyncio.ensure_future(updateVeloPosition(drone))
     asyncio.ensure_future(updatePWM(drone))
+    asyncio.ensure_future(updateBattery(drone))
     while True:
         await asyncio.sleep(1)
 
@@ -163,12 +172,18 @@ async def updateAccSpeedAng(drone):
 
 async def updatePWM(drone):
     async for actuator_output_status in drone.telemetry.actuator_output_status():
+        global pwm_values
         pwm_values = actuator_output_status.actuator[0:4]
 
 async def updateSpeedAng(drone):
     async for speed_ang in drone.telemetry.velocity_ned():
         acc["vertical"].append(acc.down_m_s2)
         acc["total"].append(math.sqrt(acc.forward_m_s2 **2 + acc.right_m_s2 **2 + acc.down_m_s2))
+
+async def updateBattery(drone):
+    async for battery in drone.telemetry.battery():
+        global battery_value
+        battery_value = battery.remaining_percent
 
 async def print_in_air(drone):
     async for in_air in drone.telemetry.in_air():
@@ -181,6 +196,7 @@ speed_ang = {"x": [0], "y": [0], "z": [0]}
 acc_ang = {"x": [0], "y": [0], "z": [0]}
 imu_timestamps = [0]
 positions = {"x": [], "y": [], "z": []} # NorthEastDown
+battery_value = 0
 mavlinkThread = td.Thread(target=asyncio.run, args=[run()])
 mavlinkThread.start()
 root=tk.Tk()
