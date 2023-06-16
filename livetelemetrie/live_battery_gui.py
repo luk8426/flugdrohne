@@ -42,10 +42,15 @@ class Application(tk.Frame):
                 self.ax3D.clear()
                 self.bat2d.clear()
                 self.ax2D.plot(x, y)
+                self.ax3D.plot(x, y, z)
+                self.ax3D.set_ylabel('N')
+                self.ax3D.set_xlabel('E')
+                self.ax3D.set_zlabel('D')
                 self.ax2D.set_ylabel('N')
                 self.ax2D.set_xlabel('E')
-                self.ax3D.plot(x, y, z)
                 self.bat2d.plot(battery_values[1], battery_values_gradient[0])
+                self.bat2d.set_ylabel('Avarage % Battery lost / s between 2 waypoints')
+                self.bat2d.set_xlabel('Time')
             except:
                 pass
 
@@ -60,8 +65,9 @@ class Application(tk.Frame):
         fig_pos = plt.figure()#figsize=plt.figaspect(2.))
         fig_pos.suptitle('Red Sparrow Live Position and Battery')
 
+        gs = plt.GridSpec(2, 2, figure=fig_pos)
         # First subplot
-        self.ax2D = fig_pos.add_subplot(2, 2, 1)
+        self.ax2D = fig_pos.add_subplot(gs[1, 0])
 
         x = np.asarray(positions["x"])
         y = np.asarray(positions["y"])
@@ -69,15 +75,14 @@ class Application(tk.Frame):
 
         self.ax2D.plot(x, y)
         #self.ax2D.grid(True)
-        self.ax2D.set_ylabel('X')
-        self.ax2D.set_xlabel('Y')
+
 
         # Second subplot
-        self.ax3D = fig_pos.add_subplot(2, 2, 3, projection='3d')
+        self.ax3D = fig_pos.add_subplot(gs[1, 1], projection='3d')
         self.ax3D.plot(x, y, z)
 
         # Battery subplot
-        self.bat2d = fig_pos.add_subplot(2, 2, 2)
+        self.bat2d = fig_pos.add_subplot(gs[0, :])
         self.bat2d.plot(battery_values[0], battery_values[1])
 
         # This is for the GUI
@@ -95,7 +100,7 @@ async def run():
     #asyncio.ensure_future(updateMissionStatus(drone))
     asyncio.ensure_future(updateVeloPosition(drone))
     asyncio.ensure_future(updateBattery(drone))
-    asyncio.ensure_future(updateHeading(drone))
+    #asyncio.ensure_future(updateHeading(drone))
     while True:
         await asyncio.sleep(1)
 
@@ -137,6 +142,8 @@ async def updateVeloPosition(drone):
            (abs(speed["vertical"][-1])>=2.5) & (abs(speed["vertical"][-2])<2.5)):
             nextWaypoint = True
         speed["horizontal"].append(math.sqrt(posvelo.velocity.north_m_s**2 + posvelo.velocity.east_m_s**2))
+        if (abs(speed["horizontal"][-1])<=2) & (abs(speed["horizontal"][-2])>2):
+            nextWaypoint = True
         positions["z"].append(posvelo.position.down_m)
         positions["x"].append(posvelo.position.north_m)
         positions["y"].append(posvelo.position.east_m)
