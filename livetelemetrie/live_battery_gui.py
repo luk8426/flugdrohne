@@ -95,7 +95,7 @@ class Application(tk.Frame):
         self.canvas.draw()
 
 async def run():
-    drone = System()
+    drone = System(mavsdk_server_address="localhost")
     await drone.connect(system_address="udp://:14540")
     #asyncio.ensure_future(updateMissionStatus(drone))
     asyncio.ensure_future(updateVeloPosition(drone))
