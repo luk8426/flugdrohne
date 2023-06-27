@@ -190,8 +190,8 @@
                     0,
                     0,
                     null,
-                    48.68490121333862,
-                    11.528504419653103,
+                    48.686802913707865,
+                    11.52661848841268,
                     35
                 ],
                 "type": "SimpleItem"
@@ -209,14 +209,14 @@
                     0,
                     0,
                     null,
-                    48.685037299176756,
-                    11.529049614687437,
+                    48.68638961249529,
+                    11.52687262697981,
                     35
                 ],
                 "type": "SimpleItem"
             },
             {
-                "AMSLAltAboveTerrain": null,
+                "AMSLAltAboveTerrain": 0,
                 "Altitude": 0,
                 "AltitudeMode": 1,
                 "autoContinue": true,
@@ -228,8 +228,8 @@
                     2,
                     0,
                     null,
-                    48.685037299176756,
-                    11.529049614687437,
+                    48.68638961249529,
+                    11.52687262697981,
                     0
                 ],
                 "type": "SimpleItem"
@@ -247,14 +247,14 @@
                     0,
                     0,
                     null,
-                    48.685037299176756,
-                    11.529049614687437,
+                    48.68638961249529,
+                    11.52687262697981,
                     35
                 ],
                 "type": "SimpleItem"
             },
             {
-                "AMSLAltAboveTerrain": null,
+                "AMSLAltAboveTerrain": 35,
                 "Altitude": 35,
                 "AltitudeMode": 1,
                 "autoContinue": true,
@@ -266,14 +266,14 @@
                     0,
                     0,
                     null,
-                    48.684898684724345,
-                    11.528502838644101,
+                    48.68680273232831,
+                    11.526618739547416,
                     35
                 ],
                 "type": "SimpleItem"
             },
             {
-                "AMSLAltAboveTerrain": null,
+                "AMSLAltAboveTerrain": 0,
                 "Altitude": 0,
                 "AltitudeMode": 1,
                 "autoContinue": true,
@@ -285,17 +285,17 @@
                     2,
                     0,
                     null,
-                    48.684898684724345,
-                    11.528502838644101,
+                    48.68680273232831,
+                    11.526618739547416,
                     0
                 ],
                 "type": "SimpleItem"
             }
         ],
         "plannedHomePosition": [
-            48.68490121333862,
-            11.528504419653103,
-            367
+            48.686802913707865,
+            11.52661848841268,
+            null
         ],
         "vehicleType": 2,
         "version": 2
